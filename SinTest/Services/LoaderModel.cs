@@ -9,7 +9,7 @@ namespace MyoSensor.Services
     static class LoaderModel
     {
 
-        public static void SaveSession(int idProfile, int idSession, List<double> data)
+        public static void SaveSession(int idProfile, ulong idSession, List<double> data)
         {
             var csv = new StringBuilder();
             for (int i = 0; i < data.Count; i++)
@@ -25,7 +25,7 @@ namespace MyoSensor.Services
             List<string> profilesPath = PathManager.GetProfilesInfoFilesPaths();
         }
 
-        public static List<double> LoadSession(int idProfile, int idSession)
+        public static List<double> LoadSession(int idProfile, ulong idSession)
         {
             string sessionPath = PathManager.GetSessionPath(idProfile, idSession);
 

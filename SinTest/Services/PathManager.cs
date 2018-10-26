@@ -7,8 +7,9 @@ namespace MyoSensor.Services
     {
         public static readonly string MainDataPath = System.AppDomain.CurrentDomain.BaseDirectory + "\\Data\\";
         private static readonly string FileProfileName = "\\account.json";
+        private static readonly string FileSessionName = "\\session.json";
         private static readonly string ProfilesFolderName = "Profiles\\";
-        private static readonly string SessionFolderName = "Sessions\\";
+        private static readonly string SessionFolderName = "\\Sessions\\";
         private static readonly string LogsPath = "Logs.csv";
 
         public static string Txt = ".txt";
@@ -32,9 +33,9 @@ namespace MyoSensor.Services
             return profiles;
         }
 
-        public static string GetSessionPath(int idProfile, int idSession)
+        public static string GetSessionPath(int idProfile, ulong idSession)
         {
-            string sessionFolderPath = MainDataPath + ProfilesFolderName + "\\" + idProfile.ToString() + "\\" + SessionFolderName + "\\" + idSession;
+            string sessionFolderPath = MainDataPath + ProfilesFolderName + "\\" + idProfile.ToString() + SessionFolderName + "\\" + idSession.ToString();
             if (!Directory.Exists(sessionFolderPath))
                 Directory.CreateDirectory(sessionFolderPath);
 
@@ -55,6 +56,36 @@ namespace MyoSensor.Services
             }
             dirPath += FileProfileName;
             
+            return dirPath;
+        }
+
+        public static List<string> GetSessionsInfoFilesPaths(int idProfile)
+        {
+            List<string> sessions = new List<string>();
+            string startPath = MainDataPath + ProfilesFolderName + idProfile.ToString() + SessionFolderName;
+            if (!Directory.Exists(startPath))
+                Directory.CreateDirectory(startPath);
+            string[] dirs = Directory.GetDirectories(startPath);
+            foreach (var item in dirs)
+            {
+                string p = item + FileSessionName;
+                if (File.Exists(p))
+                {
+                    sessions.Add(p);
+                }
+            }
+            return sessions;
+        }
+
+        public static string GetSessionInfoPath(int idProfile, ulong idSession)
+        {
+            string dirPath = MainDataPath + ProfilesFolderName + "\\" + idProfile.ToString() + SessionFolderName + "\\" + idSession.ToString();
+            if (!Directory.Exists(dirPath))
+            {
+                Directory.CreateDirectory(dirPath);
+            }
+            dirPath += FileSessionName;
+
             return dirPath;
         }
     }

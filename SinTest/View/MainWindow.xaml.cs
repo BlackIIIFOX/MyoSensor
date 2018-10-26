@@ -20,17 +20,25 @@ namespace MyoSensor
     /// </summary>
     public partial class MainWindow : Window
     {
+        MainViewModel mainWindowModel = new MainViewModel();
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = new MainViewModel();
+            this.DataContext = mainWindowModel;
         }
 
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        private void MenuProfiles_Click(object sender, RoutedEventArgs e)
         {
             MenuItem obMenuItem = e.OriginalSource as MenuItem;
             this.FullName.Header = obMenuItem.Header.ToString();
+            mainWindowModel.SelectedProfile = this.FullName.Header.ToString();
             // MessageBox.Show(String.Format("{0} just said Hi!", obMenuItem.Header));
+        }
+
+        private void MenuSession_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem obMenuItem = e.OriginalSource as MenuItem;
+            mainWindowModel.SelectedSession = obMenuItem.Header.ToString();
         }
 
     }

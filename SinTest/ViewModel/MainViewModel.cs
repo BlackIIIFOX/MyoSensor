@@ -13,6 +13,7 @@ namespace MyoSensor
 {
     using System;
     using System.Collections.ObjectModel;
+    using System.Collections.Specialized;
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Threading;
@@ -28,8 +29,10 @@ namespace MyoSensor
         public string TextMy { get; set; } = "Мио";
         private const int UpdateInterval = 33;
         private int maxNumberOfPoints = 1000;
-        public ObservableCollection<ProfileModel> ProfileList { get; set; }
+        private ObservableCollection<ProfileModel> profileList { get; set; }
         private ProfileModel selectedProfile = null;
+        private SessionModel selectedSession;
+        private ObservableCollection<SessionModel> sessionList { get; set; }
         #endregion
 
         #region Object Variables
@@ -45,7 +48,8 @@ namespace MyoSensor
         public PlotModel PlotModel { get; private set; }
         public int TotalNumberOfPoints { get; private set; }
         public int MaxTimeOnGraph
-        { get
+        {
+            get
             {
                 return maxNumberOfPoints;
             }
@@ -68,11 +72,36 @@ namespace MyoSensor
             }
             set
             {
-                foreach (var profile in ProfileList)
+                foreach (var profile in profileList)
                 {
                     if (profile.FullName == value)
+                    {
                         selectedProfile = profile;
+                        string date = DateTime.Now.ToString();
+                        sessionList = SessionModel.GetSessions(profile.Id);
+                        RaisePropertyChanged("SessionsItem");
+                    }
                 }
+            }
+        }
+
+        public string SelectedSession
+        {
+            get { return selectedSession.Id.ToString(); }
+            set {
+                if (selectedProfile != null)
+                {
+                    ulong idSession = Convert.ToUInt64(value);
+                    foreach (var session in sessionList)
+                    {
+                        if (session.Id == idSession)
+                        {
+                            selectedSession = session;
+                            LoadSession();
+                        }
+                    }
+                }
+
             }
         }
 
@@ -99,11 +128,32 @@ namespace MyoSensor
             {
 
                 ObservableCollection<string> profilesFullName = new ObservableCollection<string>();
-                foreach (var item in ProfileList)
+                foreach (var item in profileList)
                 {
                     profilesFullName.Add(item.FullName);
                 }
                 return profilesFullName;
+            }
+            private set { }
+        }
+
+        public ObservableCollection<string> SessionsItem
+        {
+            get
+            {
+                if (sessionList != null)
+                {
+                    ObservableCollection<string> sessionsItemId = new ObservableCollection<string>();
+                    foreach (var item in sessionList)
+                    {
+                        sessionsItemId.Add(item.Id.ToString());
+                    }
+                    return sessionsItemId;
+                }
+                else
+                {
+                    return null;
+                }
             }
             private set { }
         }
@@ -116,10 +166,10 @@ namespace MyoSensor
             this.timer = new Timer(OnTimerElapsed);
             SetupModel();
 
-            ProfileList = new ObservableCollection<ProfileModel>();
+            profileList = new ObservableCollection<ProfileModel>();
             foreach (var item in ProfileModel.GetProfiles())
             {
-                ProfileList.Add(item);
+                profileList.Add(item);
             }
         }
         #endregion
@@ -127,38 +177,73 @@ namespace MyoSensor
         #region Events
         private void StartDraw()
         {
-            SetupModel();
             SignalGen.StartReceive();
+            SetupModel();
             this.timer.Change(0, UpdateInterval);
         }
 
         private void StopDraw()
         {
-            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
             SignalGen.StopReceive();
+            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
             this.Update();
         }
 
         private void SaveSession()
         {
+            if (selectedProfile == null)
+                return;
 
+            DateTime date = DateTime.Now;
+            ulong idSession = ulong.Parse(date.ToString("yyMMddHHmmss"));
+
+            List<DataPoint> points = ((LineSeries)PlotModel.Series[0]).Points;
+            List<double> dataOnGraph = new List<double>();
+            foreach (DataPoint point in points)
+            {
+                dataOnGraph.Add(point.Y);
+            }
+            while (SignalGen.StateReceive) ;
+            SignalGen.Data = dataOnGraph;
+            LoaderModel.SaveSession(selectedProfile.Id, idSession, SignalGen.Data);
+            // sessionList = SessionModel.GetSessions(selectedProfile.Id);
+            RaisePropertyChanged("SessionsItem");
+            SessionModel newSession = new SessionModel
+            {
+                Id = idSession,
+                DateSession = date.ToString(),
+                Сomment = ""
+            };
+            SessionModel.SaveSession(selectedProfile.Id , newSession);
+            selectedSession = newSession;
+            sessionList = SessionModel.GetSessions(selectedProfile.Id);
+            // sessionList.Add(newSession);
+            RaisePropertyChanged("SessionsItem");
         }
 
         private void CreatProfile()
         {
             LoginWindow loginWIndow = new LoginWindow();
             var result = loginWIndow.ShowDialog();
-                if (result == true)
-                {
-                    string FullName = loginWIndow.FullName;
+            if (result == true)
+            {
+                string FullName = loginWIndow.FullName;
 
-                    int id = GetNewId();
-                    ProfileModel newProfile = new ProfileModel();
-                    newProfile.Id = id;
-                    newProfile.FullName = FullName;
-                    ProfileModel.SaveProfile(newProfile);
+                int id = GetNewId();
+                ProfileModel newProfile = new ProfileModel();
+                newProfile.Id = id;
+                newProfile.FullName = FullName;
+                ProfileModel.SaveProfile(newProfile);
+                profileList.Add(newProfile);
+                selectedProfile = newProfile;
+                selectedSession = null;
+                if (sessionList != null)
+                    sessionList.Clear();
+                RaisePropertyChanged("SessionsItem");
+                RaisePropertyChanged("ProfilesItem");
+                RaisePropertyChanged("SelectedProfile");
             }
-            
+
         }
 
         #endregion
@@ -178,6 +263,12 @@ namespace MyoSensor
         {
             get { return new CommandHandler(() => CreatProfile(), true); }
         }
+
+        public ICommand SaveProfileCommand
+        {
+            get { return new CommandHandler(() => SaveSession(), true); }
+        }
+        
         #endregion
 
         #region GraphicInit
@@ -199,11 +290,12 @@ namespace MyoSensor
 
             this.RaisePropertyChanged("PlotModel");
 
-            
+
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-
+        // public event NotifyCollectionChangedEventHandler CollectionChanged;
+        
         protected void RaisePropertyChanged(string property)
         {
             var handler = this.PropertyChanged;
@@ -212,6 +304,7 @@ namespace MyoSensor
                 handler(this, new PropertyChangedEventArgs(property));
             }
         }
+
         #endregion
 
         #region Draw
@@ -263,7 +356,7 @@ namespace MyoSensor
                 {
                     PlotModel.Axes[0].Reset();
                     PlotModel.Axes[1].Reset();
-                
+
                     PlotModel.Axes[0].Minimum = 0;
                     PlotModel.Axes[0].Maximum = 3000;
 
@@ -287,28 +380,24 @@ namespace MyoSensor
         #endregion
 
         #region Other
-        /*private void SaveSession()
-        {
-            LoaderModel.SaveSession(1,3, SignalGen.Data);
-        } */
 
         private int GetNewId()
         {
             int newId = 0;
             int maxId = 0;
 
-            for (int i = 0; i < ProfileList.Count; i++)
+            for (int i = 0; i < profileList.Count; i++)
             {
-                if (ProfileList[i].Id > maxId)
-                    maxId = ProfileList[i].Id;
+                if (profileList[i].Id > maxId)
+                    maxId = profileList[i].Id;
             }
 
             for (int i = 1; i < maxId; i++)
             {
                 bool state_search = false;
-                for (int j = 0; j < ProfileList.Count; j++)
+                for (int j = 0; j < profileList.Count; j++)
                 {
-                    if (ProfileList[j].Id == i)
+                    if (profileList[j].Id == i)
                     {
                         state_search = true;
                         break;
@@ -329,7 +418,7 @@ namespace MyoSensor
         private void LoadSession()
         {
 
-            SignalGen.Data = LoaderModel.LoadSession(1, 3);
+            SignalGen.Data = LoaderModel.LoadSession(selectedProfile.Id, selectedSession.Id);
             Update();
         }
         #endregion

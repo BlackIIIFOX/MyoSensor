@@ -107,7 +107,7 @@
             </Menu.ItemsPanel>
             <MenuItem Grid.Column="0" Header="Профили">
                 <MenuItem Header="Создать новый профиль" Command="{Binding CreatProfileCommand}"/>
-                <MenuItem Header="Выбрать" ItemsSource="{Binding Path=ProfilesItem}" Click="MenuItem_Click">
+                <MenuItem Header="Выбрать" ItemsSource="{Binding Path=ProfilesItem}" Click="MenuProfiles_Click">
                         <MenuItem.ItemContainerStyle>
                             <Style TargetType="{x:Type MenuItem}">
                                 <Setter Property="Command" Value="{Binding DataContext.ImportRecentItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type MenuItem}, AncestorLevel=1}}" />
@@ -117,6 +117,20 @@
                     <!--<MenuItem  DockPanel.Dock="Top" Click="" ItemsSource="{Binding ProfilesItem}">
                     </MenuItem>-->
             </MenuItem>
+            
+            <MenuItem Grid.Column="1" Header="Сессия">
+                <MenuItem Header="Сохранить" Command="{Binding SaveProfileCommand}"/>
+                <MenuItem Header="Загрузить" ItemsSource="{Binding Path=SessionsItem}" Click="MenuSession_Click">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}">
+                            <Setter Property="Command" Value="{Binding DataContext.ImportRecentItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type MenuItem}, AncestorLevel=1}}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                <!--<MenuItem  DockPanel.Dock="Top" Click="" ItemsSource="{Binding ProfilesItem}">
+                    </MenuItem>-->
+            </MenuItem>
+
             <MenuItem Name="FullName"  Grid.Column="2" Header="{Binding SelectedProfile}" HorizontalAlignment="Right">
             </MenuItem>
         </Menu>
