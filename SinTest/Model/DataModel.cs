@@ -140,7 +140,7 @@ namespace MyoSensor.Model
                     lock (data)
                     {
                         double num = Convert.ToDouble(string_num);
-                        if (num > 4000)
+                        if (num > 4096)
                             continue;
                         data.Add(num);
                     }

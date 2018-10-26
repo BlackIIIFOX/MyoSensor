@@ -33,6 +33,7 @@ namespace MyoSensor
         private ProfileModel selectedProfile = null;
         private SessionModel selectedSession;
         private ObservableCollection<SessionModel> sessionList { get; set; }
+        private readonly int maxGraphY = 4200;
         #endregion
 
         #region Object Variables
@@ -277,7 +278,7 @@ namespace MyoSensor
             this.timer.Change(Timeout.Infinite, Timeout.Infinite);
 
             PlotModel = new PlotModel();
-            PlotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 3000 });
+            PlotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = maxGraphY });
 
             this.numberOfSeries = 1;
 
@@ -358,7 +359,7 @@ namespace MyoSensor
                     PlotModel.Axes[1].Reset();
 
                     PlotModel.Axes[0].Minimum = 0;
-                    PlotModel.Axes[0].Maximum = 3000;
+                    PlotModel.Axes[0].Maximum = maxGraphY;
 
                     PlotModel.Axes[1].Minimum = 0;
                     PlotModel.Axes[1].Maximum = n;
