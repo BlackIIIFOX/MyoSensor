@@ -28,10 +28,13 @@
 
     </Window.Resources>
 
+        
 
-    <Grid x:Name="LayoutRoot" Background="White">
+        <Grid x:Name="LayoutRoot" Background="White">
 
+        
         <Grid.RowDefinitions>
+            <RowDefinition MinHeight="20" MaxHeight="20" />
             <RowDefinition MinHeight="50" MaxHeight="50"/>
             <RowDefinition/>
             <!--<RowDefinition/>
@@ -42,13 +45,13 @@
             <ColumnDefinition MinWidth="450" Width="197*" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Text="{Binding TextMy}"
+        <TextBlock Grid.Row="1" Text="{Binding TextMy}"
                    Width="60"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Left"
                    Margin="20,0,0,0" RenderTransformOrigin="0.842,-9.438"/>
 
-        <Button Grid.Row="0" Background="Green" Width="60" 
+        <Button Grid.Row="1" Background="Green" Width="60" 
                 Height="30" HorizontalAlignment="Left"
                 Margin="94,10,0,10"
                 Style="{StaticResource TransparentStyle}"
@@ -58,7 +61,7 @@
             <!-- <Click="StartCommand"> -->
         </Button>
 
-        <Button Grid.Row="0" Background="Yellow" Width="60" 
+        <Button Grid.Row="1" Background="Yellow" Width="60" 
                 Height="30" HorizontalAlignment="Left"
                 Margin="159,10,0,10"
                 Style="{StaticResource TransparentStyle}"
@@ -69,7 +72,7 @@
         </Button>
 
         <ComboBox  x:Name="COMPortList"
-                 Grid.Row="0"
+                 Grid.Row="1"
                  HorizontalAlignment="Right" Width="111"
                  Margin="0 10 35 10"
                  ItemsSource="{Binding ComPorts}"
@@ -79,7 +82,7 @@
                    />
 
 
-        <Label Grid.Row="0"
+        <Label Grid.Row="1"
                HorizontalContentAlignment="Stretch"
                Margin="30 0 30 0"
                VerticalAlignment="Bottom"
@@ -87,8 +90,36 @@
                Background="Green"
         ></Label>
 
-        <oxy:PlotView Grid.Row="1" x:Name="plot1" Model="{Binding PlotModel}"/>
-        <CheckBox Content="Con/Dis" Grid.Row="0" HorizontalAlignment="Right" Margin="0,0,170,0" VerticalAlignment="Center" IsChecked="{Binding CheckedConnected}"/>
+        <oxy:PlotView Grid.Row="2" x:Name="plot1" Model="{Binding PlotModel}"/>
+        <CheckBox Content="Con/Dis" Grid.Row="1" HorizontalAlignment="Right" Margin="0,0,170,0" VerticalAlignment="Center" IsChecked="{Binding CheckedConnected}"/>
+
+        <Menu Margin="0,0,0,0" Grid.Row="0">
+            <Menu.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </Menu.ItemsPanel>
+            <MenuItem Grid.Column="0" Header="Профили">
+                <MenuItem Header="Создать новый профиль" Command="{Binding CreatProfileCommand}"/>
+                <MenuItem Header="Выбрать" ItemsSource="{Binding Path=ProfilesItem}" Click="MenuItem_Click">
+                        <MenuItem.ItemContainerStyle>
+                            <Style TargetType="{x:Type MenuItem}">
+                                <Setter Property="Command" Value="{Binding DataContext.ImportRecentItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type MenuItem}, AncestorLevel=1}}" />
+                            </Style>
+                        </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                    <!--<MenuItem  DockPanel.Dock="Top" Click="" ItemsSource="{Binding ProfilesItem}">
+                    </MenuItem>-->
+            </MenuItem>
+            <MenuItem Name="FullName"  Grid.Column="2" Header="{Binding SelectedProfile}" HorizontalAlignment="Right">
+            </MenuItem>
+        </Menu>
 
     </Grid>
 

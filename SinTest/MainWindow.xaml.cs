@@ -26,5 +26,12 @@ namespace MyoSensor
             this.DataContext = new MainViewModel();
         }
 
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem obMenuItem = e.OriginalSource as MenuItem;
+            this.FullName.Header = obMenuItem.Header.ToString();
+            // MessageBox.Show(String.Format("{0} just said Hi!", obMenuItem.Header));
+        }
+
     }
 }

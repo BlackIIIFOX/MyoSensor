@@ -29,7 +29,7 @@ namespace MyoSensor
         private const int UpdateInterval = 33;
         private int maxNumberOfPoints = 1000;
         public ObservableCollection<ProfileModel> ProfileList { get; set; }
-        private ProfileModel selectedProfile;
+        private ProfileModel selectedProfile = null;
         #endregion
 
         #region Object Variables
@@ -40,18 +40,39 @@ namespace MyoSensor
         private int numberOfSeries;
         #endregion
 
-       
+
         #region Setters
         public PlotModel PlotModel { get; private set; }
         public int TotalNumberOfPoints { get; private set; }
         public int MaxTimeOnGraph
         { get
             {
-               return maxNumberOfPoints;
+                return maxNumberOfPoints;
             }
             set
             {
                 maxNumberOfPoints = value;
+            }
+        }
+
+        public string SelectedProfile
+        {
+            get
+            {
+                {
+                    if (selectedProfile == null)
+                        return "Не авторизирован";
+                    else
+                        return selectedProfile.FullName;
+                }
+            }
+            set
+            {
+                foreach (var profile in ProfileList)
+                {
+                    if (profile.FullName == value)
+                        selectedProfile = profile;
+                }
             }
         }
 
@@ -72,6 +93,21 @@ namespace MyoSensor
             set { SignalGen.NamePort = value; }
         }
 
+        public ObservableCollection<string> ProfilesItem
+        {
+            get
+            {
+
+                ObservableCollection<string> profilesFullName = new ObservableCollection<string>();
+                foreach (var item in ProfileList)
+                {
+                    profilesFullName.Add(item.FullName);
+                }
+                return profilesFullName;
+            }
+            private set { }
+        }
+
         #endregion
 
         #region Constructors
@@ -89,23 +125,40 @@ namespace MyoSensor
         #endregion
 
         #region Events
-        private void PushButtonStart()
+        private void StartDraw()
         {
             SetupModel();
             SignalGen.StartReceive();
             this.timer.Change(0, UpdateInterval);
         }
 
-        private void PushButtonStop()
+        private void StopDraw()
         {
             this.timer.Change(Timeout.Infinite, Timeout.Infinite);
             SignalGen.StopReceive();
             this.Update();
         }
 
-        private void PushButtonSaveSession()
+        private void SaveSession()
         {
 
+        }
+
+        private void CreatProfile()
+        {
+            LoginWindow loginWIndow = new LoginWindow();
+            var result = loginWIndow.ShowDialog();
+                if (result == true)
+                {
+                    string FullName = loginWIndow.FullName;
+
+                    int id = GetNewId();
+                    ProfileModel newProfile = new ProfileModel();
+                    newProfile.Id = id;
+                    newProfile.FullName = FullName;
+                    ProfileModel.SaveProfile(newProfile);
+            }
+            
         }
 
         #endregion
@@ -113,12 +166,17 @@ namespace MyoSensor
         #region Commands
         public ICommand StopCommand
         {
-            get { return new CommandHandler(() => PushButtonStop(), true); }
+            get { return new CommandHandler(() => StopDraw(), true); }
         }
 
         public ICommand StartCommand
         {
-            get { return new CommandHandler(() => PushButtonStart(), true); }
+            get { return new CommandHandler(() => StartDraw(), true); }
+        }
+
+        public ICommand CreatProfileCommand
+        {
+            get { return new CommandHandler(() => CreatProfile(), true); }
         }
         #endregion
 
@@ -229,9 +287,43 @@ namespace MyoSensor
         #endregion
 
         #region Other
-        private void SaveSession()
+        /*private void SaveSession()
         {
             LoaderModel.SaveSession(1,3, SignalGen.Data);
+        } */
+
+        private int GetNewId()
+        {
+            int newId = 0;
+            int maxId = 0;
+
+            for (int i = 0; i < ProfileList.Count; i++)
+            {
+                if (ProfileList[i].Id > maxId)
+                    maxId = ProfileList[i].Id;
+            }
+
+            for (int i = 1; i < maxId; i++)
+            {
+                bool state_search = false;
+                for (int j = 0; j < ProfileList.Count; j++)
+                {
+                    if (ProfileList[j].Id == i)
+                    {
+                        state_search = true;
+                        break;
+                    }
+                }
+
+                if (state_search == false)
+                {
+                    newId = i;
+                    return newId;
+                }
+
+            }
+
+            return maxId + 1;
         }
 
         private void LoadSession()

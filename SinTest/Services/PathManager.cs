@@ -6,7 +6,7 @@ namespace MyoSensor.Services
     public static class PathManager
     {
         public static readonly string MainDataPath = System.AppDomain.CurrentDomain.BaseDirectory + "\\Data\\";
-        private static readonly string FileProfile = "account.json";
+        private static readonly string FileProfileName = "\\account.json";
         private static readonly string ProfilesFolderName = "Profiles\\";
         private static readonly string SessionFolderName = "Sessions\\";
         private static readonly string LogsPath = "Logs.csv";
@@ -23,7 +23,7 @@ namespace MyoSensor.Services
             string[] dirs = Directory.GetDirectories(startPath);
             foreach (var item in dirs)
             {
-                string p = item + "\\" + FileProfile;
+                string p = item + FileProfileName;
                 if (File.Exists(p))
                 {
                     profiles.Add(p);
@@ -53,6 +53,8 @@ namespace MyoSensor.Services
             {
                 Directory.CreateDirectory(dirPath);
             }
+            dirPath += FileProfileName;
+            
             return dirPath;
         }
     }
