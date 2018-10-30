@@ -137,11 +137,20 @@ namespace MyoSensor.Model
                     string string_num = System.Text.Encoding.UTF8.GetString(num_bute);
                     // string num = BitConverter.ToString(num_bute, 0);
                     count = 0;
+                    double num = 0;
+                    try
+                    {
+                        num = Convert.ToDouble(string_num);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (num > 4096)
+                        continue;
+
                     lock (data)
                     {
-                        double num = Convert.ToDouble(string_num);
-                        if (num > 4096)
-                            continue;
                         data.Add(num);
                     }
                     continue;
