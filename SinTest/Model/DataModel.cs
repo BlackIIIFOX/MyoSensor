@@ -16,7 +16,11 @@ namespace MyoSensor.Model
     {
         #region Variables
         private const int testFiltercMod = 0;
-        private List<double> data = new List<double>();
+        // private List<double> data_sensor1 = new List<double>();
+        // private List<double> data_sensor2 = new List<double>();
+        SensorData dataSensor1 = new SensorData();
+        SensorData dataSensor2 = new SensorData();
+        private List<byte> input_data = new List<byte>();
         private double sampleRate;
         private bool stateNoice = false;
 
@@ -25,6 +29,12 @@ namespace MyoSensor.Model
         private bool stateConnected = false;
         private SerialPort serialPort = new SerialPort();
         private string currentNamePort = "";
+
+        public struct SensorData
+        {
+            public List<double> dataSensor;
+            public int indexDataReturned;
+        }
         #endregion
 
         #region Setters
@@ -45,11 +55,12 @@ namespace MyoSensor.Model
         public List<List<double>> Data
         {
             get {
-                List<List<double>> Data = new List<List<double>> { data, data };
+                List<List<double>> Data = new List<List<double>> { dataSensor1.dataSensor, dataSensor2.dataSensor };
                 return Data;
             }
             set {
-                // data = value;
+                dataSensor1.dataSensor = value[0];
+                dataSensor2.dataSensor = value[1];
             }
         }
 
@@ -105,8 +116,18 @@ namespace MyoSensor.Model
             ComPorts = new ObservableCollection<string>(SerialPort.GetPortNames());
             SerialSetup();
             StateReceive = false;
+            InitStruct();
         }
         #endregion
+
+        private void InitStruct()
+        {
+            dataSensor1.dataSensor = new List<double>();
+            dataSensor2.dataSensor = new List<double>();
+
+            dataSensor1.indexDataReturned = 0;
+            dataSensor2.indexDataReturned = 0;
+        }
 
         private void SerialSetup()
         {
@@ -116,7 +137,6 @@ namespace MyoSensor.Model
             serialPort.DataBits = 8;
             serialPort.Handshake = Handshake.None;
             serialPort.RtsEnable = true;
-
             serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
         }
 
@@ -132,11 +152,10 @@ namespace MyoSensor.Model
             byte[] data_com = new byte[count_dat];
             serialPort.Read(data_com, 0,count_dat);
 
-            byte[] num_bute = new byte[10];
-            int count = 0;
             for (int i = 0; i < count_dat; i++)
             {
-                if (data_com[i] == '\n')
+                input_data.Add(data_com[i]);
+                /*if (data_com[i] == '\n')
                 {
                     // num_bute[count] = Convert.ToByte('\0');
                     string string_num = System.Text.Encoding.UTF8.GetString(num_bute);
@@ -162,7 +181,53 @@ namespace MyoSensor.Model
                 }
                 num_bute[count] = data_com[i];
                 count++;
+                */
+            }
 
+            
+            int count = 0;
+            byte[] num_byte = new byte[20];
+            for (int i = 0; i < input_data.Count; i++)
+            {
+                num_byte[count] = input_data[i];
+                if (num_byte[count] == '\n')
+                {
+                    //num_byte[count] = Convert.ToByte('\0');
+                    string InputString = Encoding.UTF8.GetString(num_byte);
+                    string[] tokens = InputString.Split(' ');
+
+                    double sensor1_value, sensor2_value;
+                    try
+                    {
+                        string string_sensor1 = tokens[0];// Encoding.UTF8.GetString(sensor1_byte);
+                        string string_sensor2 = tokens[1];// Encoding.UTF8.GetString(sensor2_byte);
+                        sensor1_value = Convert.ToDouble(string_sensor1);
+                        sensor2_value = Convert.ToDouble(string_sensor2);
+                        
+                    }
+                    catch
+                    {
+                        input_data.RemoveRange(0, count);
+                        count = 0;
+                        continue;
+                    }
+
+
+                    input_data.RemoveRange(0, count);
+
+                    lock (dataSensor1.dataSensor)
+                    {
+                        dataSensor1.dataSensor.Add(sensor1_value);
+                    }
+
+                    lock (dataSensor2.dataSensor)
+                    {
+                        dataSensor2.dataSensor.Add(sensor2_value);
+                    }
+                    count = 0;
+                    continue;
+                }
+                count++;
             }
         }
 
@@ -185,7 +250,12 @@ namespace MyoSensor.Model
         {
             if (StateConnected == true)
             {
-                data.Clear();
+                dataSensor1.dataSensor.Clear();
+                dataSensor2.dataSensor.Clear();
+
+                dataSensor1.indexDataReturned = 0;
+                dataSensor2.indexDataReturned = 0;
+
                 serialPort.DiscardInBuffer();
                 serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
                 StateReceive = true;
@@ -195,16 +265,23 @@ namespace MyoSensor.Model
         public List<List<double>> GetNewData()
         {
             List<List<double>> data_result = new List<List<double>>();
-            lock (data)
+            lock (dataSensor1.dataSensor)
             {
-                int currIndexReturnder = indexDataReturned;
-                indexDataReturned = data.Count;
-                var new_data = data.Skip(currIndexReturnder).Take(data.Count).ToList<double>();
+                int currIndexReturnder = dataSensor1.indexDataReturned;
+                indexDataReturned = dataSensor1.dataSensor.Count;
+                var new_data = dataSensor1.dataSensor.Skip(currIndexReturnder).Take(dataSensor1.dataSensor.Count).ToList<double>();
                 data_result.Add(new_data);
-                data_result.Add(new_data);
-                return data_result;
             }
 
+            lock (dataSensor2.dataSensor)
+            {
+                int currIndexReturnder = dataSensor2.indexDataReturned;
+                indexDataReturned = dataSensor2.dataSensor.Count;
+                var new_data = dataSensor2.dataSensor.Skip(currIndexReturnder).Take(dataSensor1.dataSensor.Count).ToList<double>();
+                data_result.Add(new_data);
+            }
+
+            return data_result;
         }
 
         
