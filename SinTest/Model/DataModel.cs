@@ -42,10 +42,15 @@ namespace MyoSensor.Model
             set;
         }
 
-        public List<double> Data
+        public List<List<double>> Data
         {
-            get { return data; }
-            set { data = value; }
+            get {
+                List<List<double>> Data = new List<List<double>> { data, data };
+                return Data;
+            }
+            set {
+                // data = value;
+            }
         }
 
         public string NamePort
@@ -187,14 +192,17 @@ namespace MyoSensor.Model
             }
         }
 
-        public List<double> GetNewData()
+        public List<List<double>> GetNewData()
         {
+            List<List<double>> data_result = new List<List<double>>();
             lock (data)
             {
                 int currIndexReturnder = indexDataReturned;
                 indexDataReturned = data.Count;
                 var new_data = data.Skip(currIndexReturnder).Take(data.Count).ToList<double>();
-                return new_data;
+                data_result.Add(new_data);
+                data_result.Add(new_data);
+                return data_result;
             }
 
         }

@@ -205,8 +205,8 @@ namespace MyoSensor
                 dataOnGraph.Add(point.Y);
             }
             while (SignalGen.StateReceive) ;
-            SignalGen.Data = dataOnGraph;
-            LoaderModel.SaveSession(selectedProfile.Id, idSession, SignalGen.Data);
+            //SignalGen.Data = dataOnGraph;
+            //LoaderModel.SaveSession(selectedProfile.Id, idSession, SignalGen.Data);
             // sessionList = SessionModel.GetSessions(selectedProfile.Id);
             RaisePropertyChanged("SessionsItem");
             SessionModel newSession = new SessionModel
@@ -280,12 +280,14 @@ namespace MyoSensor
             PlotModel = new PlotModel();
             PlotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = maxGraphY });
 
-            this.numberOfSeries = 1;
+            /*this.numberOfSeries = 2;
 
             for (int i = 0; i < this.numberOfSeries; i++)
             {
-                PlotModel.Series.Add(new LineSeries { LineStyle = LineStyle.Solid });
-            }
+                PlotModel.Series.Add(new LineSeries { LineStyle = LineStyle.Solid, Color = OxyColor.FromRgb(255,0,0)});
+            }*/
+            PlotModel.Series.Add(new LineSeries { LineStyle = LineStyle.Solid, Color = OxyColor.FromRgb(255, 0, 0) });
+            PlotModel.Series.Add(new LineSeries { LineStyle = LineStyle.Solid, Color = OxyColor.FromRgb(0, 255, 0) });
 
             this.watch.Start();
 
@@ -323,19 +325,34 @@ namespace MyoSensor
         {
             double t = this.watch.ElapsedMilliseconds * 0.001;
             int n = 0;
+
+            List<List<double>> SignalsData;
+            if (SignalGen.StateReceive == true)
+            {
+                SignalsData = SignalGen.GetNewData();
+            }
+            else
+            {
+                SignalsData = SignalGen.Data;
+            }
+
             for (int i = 0; i < PlotModel.Series.Count; i++)
             {
+                
                 var s = (LineSeries)PlotModel.Series[i];
+                /*double x = s.Points.Count > 0 ? s.Points[s.Points.Count - 1].X + 1 : 0;
+                s.Points.Add(new DataPoint(x, i * 200 + 500));
+                s.Points.Add(new DataPoint(x+1, i * 200 + 500));
+                s.Points.Add(new DataPoint(x+2, i * 200 + 500));
+                s.Points.Add(new DataPoint(x+3, i * 200 + 500));
+                s.Points.Add(new DataPoint(x+4, i * 200 + 500));*/
                 List<double> data;
-                if (SignalGen.StateReceive == true)
+                data = SignalsData[i];
+                if (SignalGen.StateReceive == false)
                 {
-                    data = SignalGen.GetNewData();
-                }
-                else
-                {
-                    data = SignalGen.Data;
                     s.Points.Clear();
                 }
+
                 for (int j = 0; j < data.Count(); j++)
                 {
                     double x = s.Points.Count > 0 ? s.Points[s.Points.Count - 1].X + 1 : 0;
@@ -377,7 +394,7 @@ namespace MyoSensor
                 this.RaisePropertyChanged("TotalNumberOfPoints");
             }
 
-        }
+            }
         #endregion
 
         #region Other
@@ -419,7 +436,7 @@ namespace MyoSensor
         private void LoadSession()
         {
 
-            SignalGen.Data = LoaderModel.LoadSession(selectedProfile.Id, selectedSession.Id);
+            // SignalGen.Data = LoaderModel.LoadSession(selectedProfile.Id, selectedSession.Id);
             Update();
         }
         #endregion
