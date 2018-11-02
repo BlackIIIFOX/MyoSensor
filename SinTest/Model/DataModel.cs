@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.IO.Ports;
+using System.Diagnostics;
 
 namespace MyoSensor.Model
 {
@@ -137,7 +138,7 @@ namespace MyoSensor.Model
             serialPort.DataBits = 8;
             serialPort.Handshake = Handshake.None;
             serialPort.RtsEnable = true;
-            serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+            // serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
         }
 
         private void ConnectToSerial(string name)
@@ -146,89 +147,116 @@ namespace MyoSensor.Model
             serialPort.Open();
         }
 
+        int count_rec = 0;
         private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
-            int count_dat = serialPort.BytesToRead;
-            byte[] data_com = new byte[count_dat];
-            serialPort.Read(data_com, 0,count_dat);
-
-            for (int i = 0; i < count_dat; i++)
+            while (serialPort.BytesToRead > 10)
             {
-                input_data.Add(data_com[i]);
-                /*if (data_com[i] == '\n')
+                string data = serialPort.ReadLine();
+                string[] tokens = data.Split(' ');
+                count_rec++;
+                double sensor1, sensor2;
+                try
                 {
-                    // num_bute[count] = Convert.ToByte('\0');
-                    string string_num = System.Text.Encoding.UTF8.GetString(num_bute);
-                    // string num = BitConverter.ToString(num_bute, 0);
-                    count = 0;
-                    double num = 0;
-                    try
-                    {
-                        num = Convert.ToDouble(string_num);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                    if (num > 4096)
-                        continue;
-
-                    lock (data)
-                    {
-                        data.Add(num);
-                    }
-                    continue;
-                }
-                num_bute[count] = data_com[i];
-                count++;
-                */
-            }
-
-            
-            int count = 0;
-            byte[] num_byte = new byte[20];
-            for (int i = 0; i < input_data.Count; i++)
-            {
-                num_byte[count] = input_data[i];
-                if (num_byte[count] == '\n')
-                {
-                    //num_byte[count] = Convert.ToByte('\0');
-                    string InputString = Encoding.UTF8.GetString(num_byte);
-                    string[] tokens = InputString.Split(' ');
-
-                    double sensor1_value, sensor2_value;
-                    try
-                    {
-                        string string_sensor1 = tokens[0];// Encoding.UTF8.GetString(sensor1_byte);
-                        string string_sensor2 = tokens[1];// Encoding.UTF8.GetString(sensor2_byte);
-                        sensor1_value = Convert.ToDouble(string_sensor1);
-                        sensor2_value = Convert.ToDouble(string_sensor2);
-                        
-                    }
-                    catch
-                    {
-                        input_data.RemoveRange(0, count);
-                        count = 0;
-                        continue;
-                    }
-
-
-                    input_data.RemoveRange(0, count);
+                    sensor1 = Convert.ToDouble(tokens[0]);
+                    sensor2 = Convert.ToDouble(tokens[1]);
 
                     lock (dataSensor1.dataSensor)
                     {
-                        dataSensor1.dataSensor.Add(sensor1_value);
+                        dataSensor1.dataSensor.Add(sensor1);
                     }
 
                     lock (dataSensor2.dataSensor)
                     {
-                        dataSensor2.dataSensor.Add(sensor2_value);
+                        dataSensor2.dataSensor.Add(sensor2);
                     }
-                    count = 0;
+                }
+                catch
+                {
                     continue;
                 }
-                count++;
             }
+            //int count_dat = serialPort.BytesToRead;
+            //byte[] data_com = new byte[count_dat];
+            //serialPort.Read(data_com, 0, count_dat);
+            //string InputString = Encoding.UTF8.GetString(data_com);
+            //for (int i = 0; i < count_dat; i++)
+            //{
+            //    input_data.Add(data_com[i]);
+            //    /*if (data_com[i] == '\n')
+            //    {
+            //        // num_bute[count] = Convert.ToByte('\0');
+            //        string string_num = System.Text.Encoding.UTF8.GetString(num_bute);
+            //        // string num = BitConverter.ToString(num_bute, 0);
+            //        count = 0;
+            //        double num = 0;
+            //        try
+            //        {
+            //            num = Convert.ToDouble(string_num);
+            //        }
+            //        catch
+            //        {
+            //            continue;
+            //        }
+            //        if (num > 4096)
+            //            continue;
+
+            //        lock (data)
+            //        {
+            //            data.Add(num);
+            //        }
+            //        continue;
+            //    }
+            //    num_bute[count] = data_com[i];
+            //    count++;
+            //    */
+            //}
+            //// return;
+
+            //int count = 0;
+            //byte[] num_byte = new byte[20];
+            //for (int i = 0; i < input_data.Count; i++)
+            //{
+            //    num_byte[count] = input_data[i];
+            //    if (num_byte[count] == '\n')
+            //    {
+            //        //num_byte[count] = Convert.ToByte('\0');
+            //        string StringValues = Encoding.UTF8.GetString(num_byte);
+            //        string[] tokens = StringValues.Split(' ');
+
+            //        double sensor1_value, sensor2_value;
+            //        try
+            //        {
+            //            string string_sensor1 = tokens[0];// Encoding.UTF8.GetString(sensor1_byte);
+            //            string string_sensor2 = tokens[1];// Encoding.UTF8.GetString(sensor2_byte);
+            //            sensor1_value = Convert.ToDouble(string_sensor1);
+            //            sensor2_value = Convert.ToDouble(string_sensor2);
+
+            //        }
+            //        catch
+            //        {
+            //            input_data.RemoveRange(0, count);
+            //            count = 0;
+            //            continue;
+            //        }
+
+
+            //        input_data.RemoveRange(0, count);
+
+            //        lock (dataSensor1.dataSensor)
+            //        {
+            //            dataSensor1.dataSensor.Add(sensor1_value);
+            //        }
+
+            //        lock (dataSensor2.dataSensor)
+            //        {
+            //            dataSensor2.dataSensor.Add(sensor2_value);
+            //        }
+            //        count = 0;
+            //        continue;
+            //    }
+            //    count++;
+            //}
         }
 
         private void DisconncetSerial()
@@ -268,7 +296,7 @@ namespace MyoSensor.Model
             lock (dataSensor1.dataSensor)
             {
                 int currIndexReturnder = dataSensor1.indexDataReturned;
-                indexDataReturned = dataSensor1.dataSensor.Count;
+                dataSensor1.indexDataReturned = dataSensor1.dataSensor.Count;
                 var new_data = dataSensor1.dataSensor.Skip(currIndexReturnder).Take(dataSensor1.dataSensor.Count).ToList<double>();
                 data_result.Add(new_data);
             }
@@ -276,7 +304,7 @@ namespace MyoSensor.Model
             lock (dataSensor2.dataSensor)
             {
                 int currIndexReturnder = dataSensor2.indexDataReturned;
-                indexDataReturned = dataSensor2.dataSensor.Count;
+                dataSensor2.indexDataReturned = dataSensor2.dataSensor.Count;
                 var new_data = dataSensor2.dataSensor.Skip(currIndexReturnder).Take(dataSensor1.dataSensor.Count).ToList<double>();
                 data_result.Add(new_data);
             }

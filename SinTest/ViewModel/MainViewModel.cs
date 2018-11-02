@@ -197,17 +197,22 @@ namespace MyoSensor
 
             DateTime date = DateTime.Now;
             ulong idSession = ulong.Parse(date.ToString("yyMMddHHmmss"));
+            List<List<double>> dataOnGraph = new List<List<double>>();
 
-            List<DataPoint> points = ((LineSeries)PlotModel.Series[0]).Points;
-            List<double> dataOnGraph = new List<double>();
-            foreach (DataPoint point in points)
+            for (int i = 0; i < PlotModel.Series.Count; i++)
             {
-                dataOnGraph.Add(point.Y);
+                List<DataPoint> points = ((LineSeries)PlotModel.Series[i]).Points;
+                List<double> newDataSeries = new List<double>();
+                foreach (DataPoint point in points)
+                {
+                    newDataSeries.Add(point.Y);
+                }
+                dataOnGraph.Add(newDataSeries);
             }
             while (SignalGen.StateReceive) ;
-            //SignalGen.Data = dataOnGraph;
-            //LoaderModel.SaveSession(selectedProfile.Id, idSession, SignalGen.Data);
-            // sessionList = SessionModel.GetSessions(selectedProfile.Id);
+            SignalGen.Data = dataOnGraph;
+            LoaderModel.SaveSession(selectedProfile.Id, idSession, SignalGen.Data);
+            sessionList = SessionModel.GetSessions(selectedProfile.Id);
             RaisePropertyChanged("SessionsItem");
             SessionModel newSession = new SessionModel
             {
@@ -351,6 +356,8 @@ namespace MyoSensor
                 if (SignalGen.StateReceive == false)
                 {
                     s.Points.Clear();
+                    if (data.Count() > n)
+                        n = data.Count();
                 }
 
                 for (int j = 0; j < data.Count(); j++)
@@ -365,7 +372,7 @@ namespace MyoSensor
                     double y = data[j];
                     s.Points.Add(new DataPoint(x, y));
                 }
-                n += s.Points.Count;
+                
             }
 
             if (SignalGen.StateReceive == false)
@@ -379,7 +386,7 @@ namespace MyoSensor
                     PlotModel.Axes[0].Maximum = maxGraphY;
 
                     PlotModel.Axes[1].Minimum = 0;
-                    PlotModel.Axes[1].Maximum = n;
+                    PlotModel.Axes[1].Maximum = n - 1;
                     PlotModel.InvalidatePlot(true);
                 }
                 catch
@@ -436,7 +443,7 @@ namespace MyoSensor
         private void LoadSession()
         {
 
-            // SignalGen.Data = LoaderModel.LoadSession(selectedProfile.Id, selectedSession.Id);
+            SignalGen.Data = LoaderModel.LoadSession(selectedProfile.Id, selectedSession.Id);
             Update();
         }
         #endregion
